@@ -1123,11 +1123,32 @@ body.light-theme .close-review {
         </div>
 
         <div class="quick-filters" aria-label="Status SPKLU">
-          <span class="quick-pill active">☰ Semua</span>
-          <span class="quick-pill">✅ Tersedia</span>
-          <span class="quick-pill busy">▣ Sibuk</span>
-          <span class="quick-pill offline">⛔ Offline</span>
-        </div>
+
+  <button type="button"
+          class="quick-pill active"
+          data-status="Semua">
+      ☰ Semua
+  </button>
+
+  <button type="button"
+          class="quick-pill"
+          data-status="Tersedia">
+      ✅ Tersedia
+  </button>
+
+  <button type="button"
+          class="quick-pill busy"
+          data-status="Sibuk">
+      ▣ Sibuk
+  </button>
+
+  <button type="button"
+          class="quick-pill offline"
+          data-status="Offline">
+      ⛔ Offline
+  </button>
+
+</div>
 
         <div class="filter-card">
           <div class="row">
