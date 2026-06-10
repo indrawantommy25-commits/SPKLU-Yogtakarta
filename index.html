@@ -252,6 +252,57 @@
       opacity: .78;
       font-size: 14px;
     }
+    .autocomplete-container{
+  position:relative;
+}
+
+.search-suggestions{
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+
+  background:#121f33;
+  border:1px solid rgba(148,163,184,.15);
+
+  border-radius:12px;
+  margin-top:4px;
+
+  max-height:250px;
+  overflow-y:auto;
+
+  z-index:2000;
+
+  display:none;
+
+  box-shadow:0 12px 30px rgba(0,0,0,.3);
+}
+
+.suggestion-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-bottom:1px solid rgba(148,163,184,.08);
+}
+
+.suggestion-item:last-child{
+  border-bottom:none;
+}
+
+.suggestion-item:hover{
+  background:rgba(85,212,151,.15);
+}
+
+.suggestion-name{
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+}
+
+.suggestion-address{
+  color:#94a3b8;
+  font-size:11px;
+  margin-top:3px;
+}
 
     .row {
       display: grid;
@@ -1114,11 +1165,24 @@ body.light-theme .close-review {
       <aside>
         <h2 class="panel-title">Cari Stasiun</h2>
 
-        <div class="filter-card">
-          <div class="form-group search-wrap">
-            <label for="stationSearch">Nama stasiun/lokasi</label>
-            <input id="stationSearch" type="text" placeholder="Nama stasiun, lokasi..." />
+        <div class="form-group search-wrap">
+          <label for="stationSearch">Nama stasiun/lokasi</label>
+        
+          <div class="autocomplete-container">
+        
+            <input
+              id="stationSearch"
+              type="text"
+              placeholder="Nama stasiun, lokasi..."
+              autocomplete="off"
+            />
+        
+            <div id="searchSuggestions"
+                 class="search-suggestions">
+            </div>
+        
           </div>
+        </div>
           <div class="form-group">
             <label for="vehicleSelect">Pilih kendaraan listrik</label>
             <select id="vehicleSelect"></select>
@@ -1383,6 +1447,7 @@ quickPills.forEach(pill => {
     }
 
     const stationSearch = document.getElementById('stationSearch');
+    const searchSuggestions = document.getElementById('searchSuggestions');
     const vehicleInfo = document.getElementById('vehicleInfo');
     const recommendationList = document.getElementById('recommendationList');
 
@@ -1702,6 +1767,69 @@ pill.addEventListener('click', () => {
   .querySelector('[data-status="Semua"]')
   .classList.add('selected');
     applyFilters();
+    const searchInput = document.getElementById("searchInput");
+const suggestionsBox = document.getElementById("searchSuggestions");
+
+searchInput.addEventListener("input", function () {
+
+    const keyword = this.value.toLowerCase().trim();
+
+    suggestionsBox.innerHTML = "";
+
+    if (keyword.length < 1) {
+        suggestionsBox.style.display = "none";
+        return;
+    }
+
+    const filteredStations = stations.filter(station =>
+        station.name.toLowerCase().includes(keyword) ||
+        station.address.toLowerCase().includes(keyword)
+    );
+
+    if (filteredStations.length === 0) {
+        suggestionsBox.style.display = "none";
+        return;
+    }
+
+    filteredStations.forEach(station => {
+
+        const item = document.createElement("div");
+
+        item.className = "search-item";
+
+        item.innerHTML = `
+            <strong>${station.name}</strong><br>
+            <small>${station.address}</small>
+        `;
+
+        item.addEventListener("click", () => {
+
+            searchInput.value = station.name;
+
+            map.setView(
+                [station.lat, station.lng],
+                17
+            );
+
+            suggestionsBox.style.display = "none";
+        });
+
+        suggestionsBox.appendChild(item);
+    });
+
+    suggestionsBox.style.display = "block";
+});
+
+document.addEventListener("click", function(e){
+
+    if(
+        !searchInput.contains(e.target) &&
+        !suggestionsBox.contains(e.target)
+    ){
+        suggestionsBox.style.display = "none";
+    }
+
+});
   </script>
 </body>
 </html>
