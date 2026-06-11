@@ -243,6 +243,7 @@
     }
 
     .search-wrap { position: relative; }
+    .search-wrap > .autocomplete-container { position: relative; }
     .search-wrap input { padding-right: 40px; }
     .search-wrap::after {
       content: "🔍";
@@ -251,6 +252,7 @@
       bottom: 10px;
       opacity: .78;
       font-size: 14px;
+      pointer-events: none;
     }
     .autocomplete-container{
   position:relative;
@@ -1733,7 +1735,10 @@ applyFilters();
     statusSelect.addEventListener('change', applyFilters);
     regionSelect.addEventListener('change', applyFilters);
     accessSelect.addEventListener('change', applyFilters);
-    stationSearch.addEventListener('input', applyFilters);
+    stationSearch.addEventListener('input', function() {
+      applyFilters();
+      handleSearchSuggestions(this.value);
+    });
     document.getElementById('filterBtn').addEventListener('click', applyFilters);
     document.getElementById('locateBtn').addEventListener('click', locateUser);
     document.getElementById('resetBtn').addEventListener('click', resetFilters);
@@ -1767,69 +1772,52 @@ pill.addEventListener('click', () => {
   .querySelector('[data-status="Semua"]')
   .classList.add('selected');
     applyFilters();
-    const searchInput = document.getElementById("searchInput");
-const suggestionsBox = document.getElementById("searchSuggestions");
+    const suggestionsBox = document.getElementById("searchSuggestions");
 
-searchInput.addEventListener("input", function () {
+    function handleSearchSuggestions(value) {
+      const keyword = value.toLowerCase().trim();
+      suggestionsBox.innerHTML = "";
 
-    const keyword = this.value.toLowerCase().trim();
-
-    suggestionsBox.innerHTML = "";
-
-    if (keyword.length < 1) {
+      if (keyword.length < 1) {
         suggestionsBox.style.display = "none";
         return;
-    }
+      }
 
-    const filteredStations = stations.filter(station =>
+      const filteredStations = stations.filter(station =>
         station.name.toLowerCase().includes(keyword) ||
-        station.address.toLowerCase().includes(keyword)
-    );
+        station.address.toLowerCase().includes(keyword) ||
+        (station.city && station.city.toLowerCase().includes(keyword))
+      );
 
-    if (filteredStations.length === 0) {
+      if (filteredStations.length === 0) {
         suggestionsBox.style.display = "none";
         return;
-    }
+      }
 
-    filteredStations.forEach(station => {
-
+      filteredStations.slice(0, 8).forEach(station => {
         const item = document.createElement("div");
-
-        item.className = "search-item";
-
+        item.className = "suggestion-item";
         item.innerHTML = `
-            <strong>${station.name}</strong><br>
-            <small>${station.address}</small>
+          <div class="suggestion-name">${station.name}</div>
+          <div class="suggestion-address">${station.address}${station.city ? ' · ' + station.city : ''}</div>
         `;
-
         item.addEventListener("click", () => {
-
-            searchInput.value = station.name;
-
-            map.setView(
-                [station.lat, station.lng],
-                17
-            );
-
-            suggestionsBox.style.display = "none";
+          stationSearch.value = station.name;
+          map.setView([station.lat, station.lng], 17);
+          suggestionsBox.style.display = "none";
+          applyFilters();
         });
-
         suggestionsBox.appendChild(item);
-    });
+      });
 
-    suggestionsBox.style.display = "block";
-});
-
-document.addEventListener("click", function(e){
-
-    if(
-        !searchInput.contains(e.target) &&
-        !suggestionsBox.contains(e.target)
-    ){
-        suggestionsBox.style.display = "none";
+      suggestionsBox.style.display = "block";
     }
 
-});
+    document.addEventListener("click", function(e) {
+      if (!stationSearch.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.style.display = "none";
+      }
+    });
   </script>
 </body>
 </html>
