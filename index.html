@@ -175,6 +175,8 @@
       display: grid;
       grid-template-columns: 380px 1fr;
       min-height: 0;
+      height: 100%;
+      overflow: hidden;
     }
 
     aside {
@@ -522,7 +524,7 @@
       margin: 14px 2px 0;
     }
 
-    .map-wrap { position: relative; min-width: 0; min-height: 0; }
+    .map-wrap { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
     #map { width: 100%; height: 100%; min-height: 520px; background: #182236; }
     #map .leaflet-tile-pane { filter: saturate(.55) brightness(.78) contrast(1.08); }
 
@@ -645,7 +647,7 @@
       background: rgba(148,163,184,.10) !important;
     }
 
-    /* Light theme: aktif saat tombol tema diubah */
+    /* Light theme */
     body.light-theme {
       --bg: #f4f7fb;
       --panel: #ffffff;
@@ -869,15 +871,15 @@
       .top-stats { justify-content: space-between; }
       .stat-box { min-width: auto; flex: 1; padding: 0 8px; }
       .top-actions { justify-content: flex-start; }
-      .app { grid-template-columns: 1fr; }
+      .app { grid-template-columns: 1fr; height: auto; overflow: visible; }
       aside { max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
       #map { height: 66vh; }
     }
 
-    /* RESPONSIVE MOBILE & TABLET OPTIMIZATION*/
+    /* RESPONSIVE MOBILE & TABLET OPTIMIZATION */
 
 /* Tablet */
-@media screen and (max-width: 1024px) {
+@media screen and (max-width: 980px) {
 
 .topbar {
   grid-template-columns: 1fr;
@@ -899,6 +901,8 @@
 
 .app {
   grid-template-columns: 1fr;
+  height: auto;
+  overflow: visible;
 }
 
 aside {
@@ -1418,18 +1422,13 @@ body.light-theme .close-review {
     const statusSelect = document.getElementById('statusSelect');
     const quickPills = document.querySelectorAll('.quick-pill');
     statusSelect.addEventListener('change', () => {
-
-quickPills.forEach(pill => {
-
-  pill.classList.remove('selected');
-
-  if (pill.dataset.status === statusSelect.value) {
-    pill.classList.add('selected');
-  }
-
-});
-
-});
+      quickPills.forEach(pill => {
+        pill.classList.remove('selected');
+        if (pill.dataset.status === statusSelect.value) {
+          pill.classList.add('selected');
+        }
+      });
+    });
     const regionSelect = document.getElementById('regionSelect');
     const accessSelect = document.getElementById('accessSelect');
 
@@ -1467,17 +1466,11 @@ quickPills.forEach(pill => {
     }
 
     function getNeededConnector() {
-
-if (connectorSelect.value === 'Semua')
-  return 'Semua';
-
-const vehicle = getSelectedVehicle();
-
-if (connectorSelect.value !== 'auto')
-  return connectorSelect.value;
-
-return 'Semua';
-}
+      if (connectorSelect.value === 'Semua') return 'Semua';
+      const vehicle = getSelectedVehicle();
+      if (connectorSelect.value !== 'auto') return connectorSelect.value;
+      return 'Semua';
+    }
 
     function updateVehicleInfo() {
       const v = getSelectedVehicle();
@@ -1548,8 +1541,6 @@ return 'Semua';
         if (userPosition) bounds.extend([userPosition.lat, userPosition.lng]);
         map.fitBounds(bounds, { padding: [35, 35] });
 
-        // Setelah kriteria kendaraan/filter diisi, otomatis tampilkan rekomendasi pertama
-        // dan buka popup informasi stasiun pada peta.
         if (autoOpen) {
           setTimeout(() => focusStation(data[0].id, true), 450);
         }
@@ -1604,52 +1595,27 @@ return 'Semua';
     }
 
     function updateSummary(results) {
+      const available = results.filter(s => s.status === 'Tersedia').length;
+      const busy = results.filter(s => s.status === 'Sibuk').length;
+      const offline = results.filter(s => s.status === 'Offline').length;
+      document.getElementById('totalCount').textContent = results.length;
+      document.getElementById('availableCount').textContent = available;
+      document.getElementById('availableStat').textContent = available;
+      document.getElementById('busyStat').textContent = busy;
+      document.getElementById('offlineStat').textContent = offline;
+      if (userPosition && results.length > 0 && results[0].distance !== undefined) {
+        document.getElementById('nearestDistance').textContent = results[0].distance.toFixed(1) + ' km';
+      } else {
+        document.getElementById('nearestDistance').textContent = '-';
+      }
+    }
 
-const available = results.filter(
-  s => s.status === 'Tersedia'
-).length;
-
-const busy = results.filter(
-  s => s.status === 'Sibuk'
-).length;
-
-const offline = results.filter(
-  s => s.status === 'Offline'
-).length;
-
-document.getElementById('totalCount').textContent =
-  results.length;
-
-document.getElementById('availableCount').textContent =
-  available;
-
-document.getElementById('availableStat').textContent =
-  available;
-
-document.getElementById('busyStat').textContent =
-  busy;
-
-document.getElementById('offlineStat').textContent =
-  offline;
-
-if (
-  userPosition &&
-  results.length > 0 &&
-  results[0].distance !== undefined
-) {
-  document.getElementById('nearestDistance').textContent =
-    results[0].distance.toFixed(1) + ' km';
-} else {
-  document.getElementById('nearestDistance').textContent =
-    '-';
-}
-}
     function renderRecommendations(results, needed) {
       if (results.length === 0) {
         recommendationList.innerHTML = `
           <div class="card">
             <h4>Tidak ada SPKLU yang cocok</h4>
-            <p>Coba ubah konektor ke “Semua”, turunkan minimal daya, atau pilih status “Semua status”. Untuk kendaraan GB/T, lokasi publik mungkin terbatas dan perlu verifikasi adaptor/konektor.</p>
+            <p>Coba ubah konektor ke "Semua", turunkan minimal daya, atau pilih status "Semua status". Untuk kendaraan GB/T, lokasi publik mungkin terbatas dan perlu verifikasi adaptor/konektor.</p>
           </div>
         `;
         return;
@@ -1712,25 +1678,16 @@ if (
     }
 
     function resetFilters() {
-
-vehicleSelect.value = vehicles[0].id;
-
-chargingMode.value = 'auto';
-
-connectorSelect.value = 'Semua';
-
-minPowerSelect.value = '0';
-
-statusSelect.value = 'Semua';
-
-regionSelect.value = 'Semua';
-
-accessSelect.value = 'Semua';
-
-stationSearch.value = '';
-
-applyFilters();
-}
+      vehicleSelect.value = vehicles[0].id;
+      chargingMode.value = 'auto';
+      connectorSelect.value = 'Semua';
+      minPowerSelect.value = '0';
+      statusSelect.value = 'Semua';
+      regionSelect.value = 'Semua';
+      accessSelect.value = 'Semua';
+      stationSearch.value = '';
+      applyFilters();
+    }
 
     vehicleSelect.addEventListener('change', applyFilters);
     chargingMode.addEventListener('change', applyFilters);
@@ -1752,29 +1709,17 @@ applyFilters();
       setTheme(nextTheme);
     });
     quickPills.forEach(pill => {
-
-pill.addEventListener('click', () => {
-
-  quickPills.forEach(p =>
-    p.classList.remove('selected')
-  );
-
-  pill.classList.add('selected');
-
-  const status = pill.dataset.status;
-
-  statusSelect.value = status;
-
-  applyFilters();
-
-});
-
-});
+      pill.addEventListener('click', () => {
+        quickPills.forEach(p => p.classList.remove('selected'));
+        pill.classList.add('selected');
+        const status = pill.dataset.status;
+        statusSelect.value = status;
+        applyFilters();
+      });
+    });
     initTheme();
     populateVehicles();
-    document
-  .querySelector('[data-status="Semua"]')
-  .classList.add('selected');
+    document.querySelector('[data-status="Semua"]').classList.add('selected');
     applyFilters();
     const suggestionsBox = document.getElementById("searchSuggestions");
 
